@@ -4,6 +4,9 @@ const {
   userDetailsService,
   loginUserService,
   logoutUserService,
+  forgetPasswordReqService,
+  forgetPasswordOtpVerifyService,
+  newPasswordService,
   getProfileService,
   updateProfileService,
   requestAccountDeletionService,
@@ -35,15 +38,33 @@ exports.logOut = async (req, res) => {
   await logoutUserService(req, res);
 };
 
+// User Forget password
+exports.forgetPasswordReq = async (req,res) => {
+   await forgetPasswordReqService(req,res);
+}
+
+// forget password 
+exports.forgetPasswordOtpVerify = async (req,res) => {
+  await forgetPasswordOtpVerifyService (req,res);
+}
+
+// set new password after forget verify
+exports.newPassword = async(req,res) => {
+   await newPasswordService (req,res);
+}
+
+
 // See user their profile 
 exports.getProfile = async (req, res) => {
   await getProfileService(req, res);
 };
 
+// update user profile
 exports.updateProfile = async (req, res) => {
   await updateProfileService(req, res);
 };
 
+// delete user account
 exports.requestDeleteAccount = async (req, res) => {
   await requestAccountDeletionService(req, res);
 };

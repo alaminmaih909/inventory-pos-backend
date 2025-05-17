@@ -4,10 +4,14 @@ const {
   verifyOTP,
   userDetails,
   login,
+   logOut,
+  forgetPasswordReq,
+  forgetPasswordOtpVerify,
+  newPassword,
   getProfile,
   updateProfile,
   requestDeleteAccount,
-  logOut,
+ 
 } = require("../controllers/userController");
 
 const { authVerify } = require("../middlwares/authVerify");
@@ -23,6 +27,9 @@ router.post("user/userDetails",authOTPVerify, userDetails);
 router.post("user/login",authOTPVerify, login);
 router.post("user/logout", authVerify, logOut);
 
+router.post("user/forgetPasswordReq/:phone",authOTPVerify,forgetPasswordReq);
+router.post("user/forgetPassword/otpverify", forgetPasswordOtpVerify);
+router.post("user/newpassword",newPassword)
 
 router.get("user/profile", authVerify, getProfile);
 router.put("user/profile/:id", authVerify, updateProfile);
