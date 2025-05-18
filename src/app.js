@@ -18,12 +18,17 @@ connectDB();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({extended:true}));
 app.use(mongoSanitize());
 app.use(xss());
 app.use(rateLimit({ windowMs: 10 * 60 * 1000, max: 100 }));
 
 // Routes
-app.use("/api/v1.1/", require("./routes/route"));
+app.use("/api/v1.1/", require("./routes/userRoute"));
+// app.use("/api/v1.1/",require("./routes/"))
+
+app.use("*",()=>{
+    res.status(404).json({message:"Error 404, Page Not Found"})
+})
 
 module.exports = app;

@@ -6,7 +6,6 @@ const {
 } = require("../utils/allSmallutiliy");
 const bcrypt = require("bcryptjs");
 
-const UserDetails = require("../models/userDetailsModel");
 const User = require("../models/userModel");
 
 const sendEmail = require("../utils/nodeMail");
@@ -39,9 +38,9 @@ exports.signUpUserService = async (req, res) => {
 
     await sendOTPBySMS(phone, otp);
 
-    // set phone in headers for verify otp
+    /*    // set phone in headers for verify otp
     let Phone = user.phone;
-    req.headers.phone = Phone;
+    req.headers.phone = Phone; */
 
     res.status(200).json({ message: "OTP sent successfully", phone });
   } catch (error) {
@@ -54,7 +53,7 @@ exports.signUpUserService = async (req, res) => {
 exports.verifyOTPService = async (req, res) => {
   try {
     const { otp } = req.body;
-    const phone = req.headers.phone;
+    const phone = req.params.phone;
 
     if (!otp) {
       return res.status(400).json({ message: "OTP required" });
@@ -99,39 +98,29 @@ exports.userDetailsService = async (req, res) => {
       return res.status(400).json({ message: "Name & Password required" });
     }
 
-    let phone = req.headers.phone;
+    let phone = req.params.phone;
     const user = await User.findOne({ phone });
 
     // Check if user already exists
-    const existingUser = await UserDetails.findOne({ phone: user.phone });
-    if (existingUser) {
-      return res
-        .status(409)
-        .json({ message: "User already exists with this Phone Number" });
+    // const existingUser = await UserDetails.findOne({ phone: user.phone });
+    if (!user) {
+      return res.status(409).json({ message: "User not found" });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
-    const newUser = new UserDetails({
-      name,
-      email,
-      password: hashedPassword,
-    });
+    user.name = name;
+    user.email = email;
+    user.password = hashedPassword;
 
-    await newUser.save();
+    await user.save();
 
     res.status(201).json({
       message: "User registered successfully",
-      user: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-      },
+      user,
     });
   } catch (error) {
-    console.error("Register Error:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -140,7 +129,7 @@ exports.userDetailsService = async (req, res) => {
 exports.loginUserService = async (req, res) => {
   try {
     const { phone, password } = req.body;
-    const user = await UserDetails.findOne({ phone });
+    const user = await User.findOne({ phone });
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
@@ -172,13 +161,13 @@ exports.logoutUserService = async (req, res) => {
 exports.forgetPasswordReqService = async (req, res) => {
   try {
     const phone = req.body;
-    const user = await UserDetails.findOne({ phone });
+    const user = await User.findOne({ phone });
 
     if (!user) res.status(400).json({ message: "User not found" });
 
     const otp = generateOTP();
 
-    user.deleteOTP = otp;
+    user.otp = otp;
     user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
@@ -192,16 +181,13 @@ exports.forgetPasswordReqService = async (req, res) => {
     }
 
     // Send SMS
-   
-      await sendSMS({
-        to: user.phone,
-        message: `Your OTP to reset password is: ${otp}`,
-      });
-    
-      let phone = user.phone;
-      req.headers.phone = phone; 
 
-    res.json({ message: "OTP sent to email and phone number" });
+    await sendSMS({
+      to: user.phone,
+      message: `Your OTP to reset password is: ${otp}`,
+    });
+
+    res.json({ message: "Check your phone or email for otp" });
   } catch (err) {
     res.status(500).json({ message: "Server Error", error: err.message });
   }
@@ -210,34 +196,81 @@ exports.forgetPasswordReqService = async (req, res) => {
 // forget password user
 exports.forgetPasswordOtpVerifyService = async (req, res) => {
   try {
-       const {otp} = req.body; 
-       const phone = req.headers.phone;
+    const { otp } = req.body;
+    const phone = req.params.phone;
 
-       const user = await UserDetails.findOne({phone});
+    const user = await User.findOne({ phone });
 
-       if(user.deleteOTP !== otp) res.status(400).json({message:"Wrong OTP"})
+    if (user.otp !== otp) res.status(400).json({ message: "Wrong OTP" });
 
-        res.status(200)
-
-
+    res.status(200).json({ status: true });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: err.message });
-    
   }
 };
 
+// newPasswordService
 
-// newPasswordService 
+exports.newPasswordService = async (req, res) => {
+  try {
+    const { password1, password2 } = req.body;
+    const phone = req.params.phone;
 
-exports.newPasswordService = async (req,res) => {
-  
-}
+ if (!password1 || !password2 || ( password2 !== password1)) {
+      res.status(400).json({ message: "Something went to wrong" });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) res.status(400).json({ message: "User not found" });
+
+    const hashedPassword = await bcrypt.hash(password2, 10);
+
+    user.password = hashedPassword;
+
+    user.save();
+
+    res.status(201).json({ message: "Your Password is changed" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// User change password service
+exports.changePasswordService = async (req, res) => {
+  try {
+    const { password1, password2 , password3 } = req.body;
+    const phone = req.headers.phone;
+
+
+    if (!password1 || !password2 || !password3 || ( password3 !== password2)) {
+      res.status(400).json({ message: "Something went to wrong" });
+    }
+
+    const user = await User.findOne({ phone });
+     
+    const match_user = await bcrypt.compare(password1, user.password);
+    
+
+    if(!match_user) res.status(401).json({message:"Unathorized"});
+    
+
+    const hashedPassword = await bcrypt.hash(password3, 10);
+
+    user.password = hashedPassword;
+
+    user.save();
+
+    res.status(201).json({ message: "Your Password is changed" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
 
 // user profile get
 exports.getProfileService = async (req, res) => {
   try {
     let phone = req.headers.phone;
-    const user = await UserDetails.findOne({ phone });
+    const user = await User.findOne({ phone });
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: "Server Error", error: err.message });
@@ -258,13 +291,13 @@ exports.updateProfileService = async (req, res) => {
   }
 };
 
-// user account delete
+// user account delete request
 exports.requestAccountDeletionService = async (req, res) => {
   try {
     const otp = generateOTP();
-    const user = await UserDetails.findById(req.headers.user_id);
+    const user = await User.findById(req.headers.user_id);
 
-    user.deleteOTP = otp;
+    user.otp = otp;
     user.otpExpires = Date.now() + 10 * 60 * 1000; // expires in 10 minutes
     await user.save();
 
@@ -287,18 +320,17 @@ exports.requestAccountDeletionService = async (req, res) => {
   }
 };
 
+// confirm user account deletaion
 exports.confirmAccountDeletionService = async (req, res) => {
   try {
     const { otp } = req.body;
-    const user = await UserDetails.findById(req.headers.user_id);
+    const user = await User.findById(req.headers.user_id);
 
-    if (!user || user.deleteOTP !== otp || Date.now() > user.otpExpires) {
+    if (!user || user.otp !== otp || Date.now() > user.otpExpires) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    await User.findOneAndDelete(req.headers.phone);
-
-    await UserDetails.findByIdAndDelete(req.headers.user_id);
+    await User.findOneAndDelete(req.headers.user_id);
     res.cookie("token", "", { maxAge: 0 });
 
     res.json({ message: "Account deleted permanently" });

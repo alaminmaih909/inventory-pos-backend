@@ -3,9 +3,7 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-
-
- // Simulate SMS sending
+// Simulate SMS sending
 
 const sendOTPBySMS = async (phone, otp) => {
   console.log(`📲 Sending OTP ${otp} to phone number: ${phone}`);
@@ -25,7 +23,8 @@ const sendSMS = async ({ to, message }) => {
   // });
 };
 
-
-module.exports= {
-   generateOTP,sendOTPBySMS, sendSMS 
-}
+module.exports = {
+  generateOTP,
+  sendOTPBySMS,
+  sendSMS,
+};
