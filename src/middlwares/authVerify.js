@@ -3,7 +3,7 @@ const {tokenDecode} = require("../utils/tokenJWT")
 exports.authVerify = (req,res,next)=>{
 
     // Receive Token
-    let token= req.cookies['token']
+    let token= req.cookies['token'];
 
 
   // Token Decode

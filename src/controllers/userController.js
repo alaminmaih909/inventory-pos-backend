@@ -1,12 +1,13 @@
 const {
   signUpUserService,
   verifyOTPService,
+  reSendOtpService,
   userDetailsService,
   loginUserService,
   logoutUserService,
   forgetPasswordReqService,
-  forgetPasswordOtpVerifyService,
   newPasswordService,
+  changePasswordService,
   getProfileService,
   updateProfileService,
   requestAccountDeletionService,
@@ -22,6 +23,12 @@ exports.signUp = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   await verifyOTPService(req, res);
 };
+
+//reSend Otp 
+
+exports.reSendOtp = async (req,res) => {
+   await reSendOtpService (req,res);
+}
 
 // Post user details
 exports.userDetails = async (req, res) => {
@@ -41,11 +48,6 @@ exports.logOut = async (req, res) => {
 // User Forget password
 exports.forgetPasswordReq = async (req, res) => {
   await forgetPasswordReqService(req, res);
-};
-
-// forget password
-exports.forgetPasswordOtpVerify = async (req, res) => {
-  await forgetPasswordOtpVerifyService(req, res);
 };
 
 // set new password after forget verify

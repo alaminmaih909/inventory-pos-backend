@@ -3,9 +3,16 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const xss = require("xss-clean");
-const mongoSanitize = require("express-mongo-sanitize");
+const cookieParser = require("cookie-parser");
+
+// const mongoSanitize = require("express-mongo-sanitize");
 const connectDB = require("./config/db");
+
+// routes
+const userRoute = require("./routes/user.route"); // user routes
+const businessRoute = require("./routes/business.route"); // business route
+// const productRoute = require("./routes/productRoute"); // product route
+
 
 dotenv.config();
 
@@ -16,19 +23,20 @@ connectDB();
 
 // Middlewares
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5000", 
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-app.use(mongoSanitize());
-app.use(xss());
+app.use(cookieParser());
 app.use(rateLimit({ windowMs: 10 * 60 * 1000, max: 100 }));
 
 // Routes
-app.use("/api/v1.1/", require("./routes/userRoute"));
-// app.use("/api/v1.1/",require("./routes/"))
+app.use("/api/v1", userRoute); // user related routes
+app.use("/api/v1",businessRoute); // bsuiness route
+// app.use("/api/v1", productRoute)  // product related routes
 
-app.use("*",()=>{
-    res.status(404).json({message:"Error 404, Page Not Found"})
-})
 
 module.exports = app;
