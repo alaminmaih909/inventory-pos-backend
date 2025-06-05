@@ -2,6 +2,7 @@ const {
   createBusinessService,
   getAllBusinessService,
   getBusinessService,
+  dashboardService,
   updateBusinessService,
   deleteBusinessReqService,
   deleteBusinessService,
@@ -20,6 +21,11 @@ exports.getAllBusiness = async (req, res) => {
 // get a single Business
 exports.getBusiness = async (req, res) => {
   await getBusinessService(req, res);
+};
+
+// dashboard business
+exports.dashboard = async (req, res) => {
+  await dashboardService(req, res);
 };
 
 // update business data

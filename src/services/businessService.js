@@ -1,6 +1,8 @@
 const Business = require("../models/business.model");
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
+const {generateOTP} = require("../utils/allSmallutiliy");
+const {tokenEncodeBusiness} = require ("../utils/tokenJWT.js")
 
 // create a business
 exports.createBusinessService = async (req, res) => {
@@ -8,20 +10,23 @@ exports.createBusinessService = async (req, res) => {
     const userID = req.headers.user_id;
     const { businessName, phone, email, address, website } = req.body;
 
-    const createdBusiness = await Business.create({
+    const user = await User.findById({_id:userID});
+    
+    const newBusiness = await Business.create({
       userID: userID,
-      businessName: businessName,
+      ownerName: user.name,
+      businessName,
       phone: phone,
-      email: email,
-      address: address,
-      website: website,
+      email,
+      address,
+      website,
     });
 
-    if (createdBusiness) {
-      res.status(201).json({ message: "New business is created" });
+    if (newBusiness) {
+     return res.status(201).json({ message: "New business is created", newBusiness });
     }
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+     return res.status(500).json({ message: "Server error", error });
   }
 };
 
@@ -29,30 +34,50 @@ exports.createBusinessService = async (req, res) => {
 exports.getAllBusinessService = async (req, res) => {
   try {
     const userID = req.headers.user_id;
-    const businesses = await Business.find({userID:userID});
+    const businesses = await Business.find({ userID: userID });
 
-    if (!businesses) res.status(404).json({message:"No business found, Please create new business"});
+    if (!businesses)
+     return res
+        .status(404)
+        .json({ message: "No business found, Please create new business" });
 
-    res.status(200).json(businesses);
+     return res.status(200).json(businesses);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+     return res.status(500).json({ message: error.message });
   }
 };
 
 // get a single Business
-exports.getBusinessService = async (req,res) => {
-    try {
+exports.getBusinessService = async (req, res) => {
+  try {
     const business = await Business.findById(req.params.id);
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
-    res.status(200).json(business);
+    return res.status(200).json(business);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return  res.status(500).json({ message: error.message });
+  }
+};
+
+// dashboard Service
+exports.dashboardService = async (req,res) => {
+    try {
+      const userID = req.headers.user_id;
+      const businessID = req.params.id;
+ 
+      const businessToken = tokenEncodeBusiness(userID,businessID);
+
+       return res
+      .cookie("businessToken", businessToken, {
+          httpOnly: true,
+        /*  sameSite: "Strict", */
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      }).json({message:"Dashboard"});
+  } catch (error) {
+    return  res.status(500).json({ message: error.message });
   }
 }
-
-
 // update bsuiness data
 exports.updateBusinessService = async (req, res) => {
   try {
@@ -64,15 +89,15 @@ exports.updateBusinessService = async (req, res) => {
     if (!updatedBusiness) {
       return res.status(404).json({ message: "Business not found" });
     }
-    res.status(200).json(updatedBusiness);
+    return res.status(200).json(updatedBusiness);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 };
 
 // business deletaion request, send otp in user phone and email;
-exports.deleteBusinessReqService = async (req,res) => {
-    try {
+exports.deleteBusinessReqService = async (req, res) => {
+  try {
     const user = await User.findById(req.headers.user_id);
     const business = await Business.findById(req.params.id);
 
@@ -90,35 +115,38 @@ exports.deleteBusinessReqService = async (req,res) => {
       });
     }
 
-    await sendSMS({
+   /*  await sendSMS({
       to: user.phone,
       message: `Your ${business.businessName} business deletion OTP is: ${otp}`,
     });
-
-    res.json({ message: "OTP sent to your email & Phone number" });
+ */
+   return res.json({ message: "OTP sent to your email & Phone number" });
   } catch (err) {
-    res.status(500).json({ message: "Server Error", error: err.message });
+    return res.status(500).json({ message: "Server Error", error: err.message });
   }
-}
+};
 
-// confirm delete bsuiness
-exports.deleteBusinessService = async (req,res) => {
-    try {
-    const { otp,password } = req.body;
-    const user = await User.findById(req.headers.user_id);
+// confirm delete business
+exports.deleteBusinessService = async (req, res) => {
+  try {
+    const { otp, password } = req.body;
+
+    const user = await User.findById({ _id: req.headers.user_id });
 
     if (!user || user.otp !== otp || Date.now() > user.otpExpires) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    const match_password = await bcrypt.compare(password,user.password);
+    const match_password = await bcrypt.compare(password, user.password);
 
-    if(!match_password) res.status(401).json({message:"Wrong password, try again"});
+    if (!match_password) {
+      return res.status(401).json({ message: "Wrong password, try again" });
+    }
 
-    await Business.findOneAndDelete(req.params.id);
+    await Business.findOneAndDelete({ _id: req.params.id });
 
-    res.json({ message: "Business deleted permanently" });
+    return res.json({ message: "Business deleted permanently" });
   } catch (err) {
-    res.status(500).json({ message: "Server Error", error: err.message });
+    return res.status(500).json({ message: "Server Error", error: err.message });
   }
-}
+};

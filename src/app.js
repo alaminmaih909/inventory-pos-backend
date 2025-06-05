@@ -11,7 +11,9 @@ const connectDB = require("./config/db");
 // routes
 const userRoute = require("./routes/user.route"); // user routes
 const businessRoute = require("./routes/business.route"); // business route
-// const productRoute = require("./routes/productRoute"); // product route
+const otpRoute = require("./routes/otp.route"); // otp
+const productRoute = require("./routes/product.route"); // product route
+// const customerRoute = require("./routes/customer.route"); // customer route
 
 
 dotenv.config();
@@ -36,7 +38,8 @@ app.use(rateLimit({ windowMs: 10 * 60 * 1000, max: 100 }));
 // Routes
 app.use("/api/v1", userRoute); // user related routes
 app.use("/api/v1",businessRoute); // bsuiness route
-// app.use("/api/v1", productRoute)  // product related routes
-
+app.use("/api/v1",otpRoute); // otp related route
+app.use("/api/v1", productRoute);  // product related routes
+// app.use("/api/v1",customerRoute); // customer related routes
 
 module.exports = app;

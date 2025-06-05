@@ -19,17 +19,6 @@ exports.signUp = async (req, res) => {
   await signUpUserService(req, res);
 };
 
-// verify user with OTP
-exports.verifyOTP = async (req, res) => {
-  await verifyOTPService(req, res);
-};
-
-//reSend Otp 
-
-exports.reSendOtp = async (req,res) => {
-   await reSendOtpService (req,res);
-}
-
 // Post user details
 exports.userDetails = async (req, res) => {
   await userDetailsService(req, res);
