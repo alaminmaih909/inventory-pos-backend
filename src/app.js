@@ -13,7 +13,7 @@ const userRoute = require("./routes/user.route"); // user routes
 const businessRoute = require("./routes/business.route"); // business route
 const otpRoute = require("./routes/otp.route"); // otp
 const productRoute = require("./routes/product.route"); // product route
-// const customerRoute = require("./routes/customer.route"); // customer route
+const customerRoute = require("./routes/customer.route"); // customer route
 
 
 dotenv.config();
@@ -40,6 +40,6 @@ app.use("/api/v1", userRoute); // user related routes
 app.use("/api/v1",businessRoute); // bsuiness route
 app.use("/api/v1",otpRoute); // otp related route
 app.use("/api/v1", productRoute);  // product related routes
-// app.use("/api/v1",customerRoute); // customer related routes
+app.use("/api/v1",customerRoute); // customer related routes
 
 module.exports = app;

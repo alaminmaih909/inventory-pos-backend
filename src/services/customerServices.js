@@ -1,4 +1,4 @@
-const CustomerModel = require("../models/category.model");
+const CustomerModel = require("../models/customer.model");
 
 // create Customer Service
 exports.createCustomerService = async (req, res) => {
@@ -7,10 +7,17 @@ exports.createCustomerService = async (req, res) => {
     const businessID = req.headers.business_id;
     const { name, phone, address } = req.body;
 
-    if (!name || !phone || address) {
+    if (!name || !phone || !address) {
       return res.json({ message: "Need customer data" });
     }
 
+    const exitsCustomer = await CustomerModel.findOne({phone});
+    if (exitsCustomer) {
+      return res
+        .status(400)
+        .json({ message: "The number is existed, try new" });
+    }
+ 
     const customer = new CustomerModel({
       userID: userID,
       businessID: businessID,
@@ -65,7 +72,10 @@ exports.getCustomersService = async (req, res) => {
 // get a single Customers Service
 exports.getCustomerService = async (req, res) => {
   try {
-    const customer = await CustomerModel.findOne(req.params.phone);
+    const userID = req.headers.user_id;
+    const businessID = req.headers.business_id;
+    const phone = req.params.phone;
+    const customer = await CustomerModel.findOne({userID,businessID,phone});
     res.status(200).json(customer);
   } catch (err) {
     res.status(500).json({ message: "Customer fetch failed", error: err });
