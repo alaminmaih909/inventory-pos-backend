@@ -8,6 +8,13 @@ exports.createSupplierService = async (req, res) => {
 
     const { name, phone, address } = req.body; // from body
 
+    // find exits supplier
+    const exitsSupplier = await SupplierModel.findOne({ phone });
+
+    // check exits Supplier
+    if (exitsSupplier) {
+      return res.status(400).json({ message: "Supplier Already exits" });
+    }
     const supplier = await SupplierModel.create({
       userID,
       businessID,
@@ -34,7 +41,7 @@ exports.getSuppliersService = async (req, res) => {
     const noSupplierFound = await SupplierModel.find({ userID, businessID });
 
     // No supplier found check
-    if (noSupplierFound.length === "") {
+    if (noSupplierFound.length === 0) {
       return res.status(400).json({ message: "No Supplier here" });
     }
 
@@ -53,7 +60,10 @@ exports.getSuppliersService = async (req, res) => {
       .skip(skip)
       .limit(Number(limit))
       .sort({ createdAt: -1 });
-
+    // No supplier found after search
+    if(suppliers.length === 0){
+      return res.status(200).json({message:"No Supplier here with the info"});
+    }
     const total = await SupplierModel.countDocuments(query);
 
     return res.status(200).json({

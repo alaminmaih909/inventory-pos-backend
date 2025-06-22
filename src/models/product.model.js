@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// product schema
 const productSchema = new mongoose.Schema(
   {
     userID: {
@@ -78,6 +79,11 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    /* warrantySerialNo: [
+      {
+        type: String,
+      },
+    ], */
   },
   {
     timestamps: true,
