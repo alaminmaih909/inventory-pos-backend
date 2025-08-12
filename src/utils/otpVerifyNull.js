@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const User = require("../models/userModel");
+const User = require("../models/user.model");
 
 // প্রতি মিনিটে একবার চেক করবে যাদের otpExpires অতীত হয়ে গেছে
 cron.schedule("* * * * *", async () => {

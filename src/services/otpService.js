@@ -8,21 +8,21 @@ exports.verifyOTPService = async (req, res) => {
     const phone = req.params.phone;
 
     if (!otp) {
-      return res.status(400).json({ message: "OTP required" });
+      return res.status(400).json({status:"Failed", message: "OTP required" });
     }
       
     const user = await User.findOne({ phone });
     
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({status:"Failed", message: "User not found" });
     }
 
     if (user.otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(400).json({status:"Failed", message: "Invalid OTP" });
     }
 
     if (user.otpExpires < new Date()) {
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(400).json({status:"Failed", message: "OTP expired" });
     }
 
     user.isVerified = true;
@@ -33,10 +33,10 @@ exports.verifyOTPService = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "Phone number verified successfully, Thanks" });
+      .json({status:"Success", message: "Phone number verified successfully, Thanks" });
   } catch (error) {
-    console.error("OTP verify error:", error.message);
-    res.status(500).json({ message: "Server error" });
+    // console.error("OTP verify error:", error.message);
+    res.status(500).json({status:"Failed", message: "Server error" });
   }
 };
 
@@ -50,7 +50,7 @@ exports.reSendOtpService = async (req,res) => {
     const user = await User.findOne({ phone });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({status:"Failed", message: "User not found" });
     }
 
     //  Check if user is blocked, how many time need to wait that's show in frontend
@@ -61,7 +61,7 @@ exports.reSendOtpService = async (req,res) => {
       user.otpExpires = null;
        await user.save();
        
-      return res.status(429).json({
+      return res.status(429).json({status:"Failed",
         message: `Too many OTP requests. Please try again after ${waitMinutes} minutes.`,
       });
     }
@@ -78,6 +78,7 @@ exports.reSendOtpService = async (req,res) => {
       await user.save();
 
       return res.status(429).json({
+        status:"Hold",
         message: "Too many OTP requests. You are blocked for 1 hour.",
       });
     }
@@ -96,12 +97,13 @@ exports.reSendOtpService = async (req,res) => {
     // await sendSms(phone, `Your OTP is ${otp}`);
 
     res.status(200).json({
+      status:"Success",
       message: "OTP resent successfully",
       otp: otp, // production এ এটি পাঠাবে না, কনসোলে দেখাবে বা sms/email করবে
     });
 
   } catch (error) {
     console.error("Resend OTP Error:", error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(500).json({status:"Failed", message: "Something went wrong" });
   }
 }

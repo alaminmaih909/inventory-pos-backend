@@ -16,10 +16,16 @@ exports.signUpUserService = async (req, res) => {
     const { phone } = req.body;
 
     if (!phone) {
-      return res.status(400).json({ message: "Phone number is required" });
+      return res.status(400).json({ status:"Failed", message: "Phone number is required" });
     }
-
+    
+    
     let user = await User.findOne({ phone });
+
+    if(user) {
+      return res.status(400).json({status:"Failed", message: "User Already Exist, try new" });
+
+    }
 
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // expires in 10 mins
@@ -42,10 +48,10 @@ exports.signUpUserService = async (req, res) => {
     let Phone = user.phone;
     req.headers.phone = Phone; */
 
-    return res.status(200).json({ message: "OTP sent successfully", phone });
+    return res.status(200).json({status:"Success", message: "OTP sent successfully", phone });
   } catch (error) {
-    console.error("Register error:", error.message);
-    return res.status(500).json({ message: "Server error" });
+    // console.error("Register error:", error);
+    return res.status(500).json({status:"Failed", message: error.message  });
   }
 };
 
@@ -56,7 +62,7 @@ exports.userDetailsService = async (req, res) => {
 
     // Validation
     if (!name || !password) {
-      return res.status(400).json({ message: "Name & Password required" });
+      return res.status(400).json({ status:"Failed" ,message: "Name & Password required" });
     }
 
     let phone = req.params.phone;
@@ -65,7 +71,7 @@ exports.userDetailsService = async (req, res) => {
     // Check if user already exists
     // const existingUser = await UserDetails.findOne({ phone: user.phone });
     if (!user) {
-      return res.status(409).json({ message: "User not found" });
+      return res.status(409).json({status:"Failed" , message: "User not found" });
     }
 
     // Hash password
@@ -78,11 +84,12 @@ exports.userDetailsService = async (req, res) => {
     await user.save();
 
     return res.status(201).json({
+      status:"Success" ,
       message: "User registered successfully",
       user,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({status:"Failed" , message: "Server error" });
   }
 };
 
@@ -92,11 +99,11 @@ exports.loginUserService = async (req, res) => {
     const { phone, password } = req.body;
     const user = await User.findOne({ phone });
 
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) return res.status(404).json({status:"Failed", message: "User not found" });
 
     const match_user = await bcrypt.compare(password, user.password);
     if (!match_user)
-      return res.status(400).json({ message: "Wrong password!" });
+      return res.status(400).json({status:"Failed", message: "Wrong password!" });
 
     const token = tokenEncode(phone, user._id);
 
@@ -112,11 +119,11 @@ exports.loginUserService = async (req, res) => {
         /*  sameSite: "Strict", */
         maxAge: 180 * 24 * 60 * 60 * 1000, // 6 months
       })
-      .json({ message: "Login successful" });
+      .json({status:"Success", message: "Login successful" });
   } catch (err) {
     return res
       .status(500)
-      .json({ message: "Server Error", error: err.message });
+      .json({status:"Failed", message: "Server Error", error: err.message });
   }
 };
 
@@ -124,7 +131,7 @@ exports.loginUserService = async (req, res) => {
 exports.logoutUserService = async (req, res) => {
   return res
     .cookie("token", "", { maxAge: 0 })
-    .json({ message: "Logged out successfully" });
+    .json({ status:"Success", message: "Logged out successfully" });
 };
 
 // User forget password request
@@ -133,7 +140,7 @@ exports.forgetPasswordReqService = async (req, res) => {
     const phone = req.body.phone;
     const user = await User.findOne({ phone });
 
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user) return res.status(400).json({ status:"Failed",message: "User not found" });
 
     const otp = generateOTP();
 
@@ -157,11 +164,11 @@ exports.forgetPasswordReqService = async (req, res) => {
       message: `Your OTP to reset password is: ${otp}`,
     });
 
-    return res.json({ message: "Check your phone or email for otp" });
+    return res.json({ status:"Success", message: "Check your phone or email for otp" });
   } catch (err) {
     return res
       .status(500)
-      .json({ message: "Server Error", error: err.message });
+      .json({status:"Failed", message: "Server Error", error: err.message });
   }
 };
 

@@ -2,7 +2,7 @@ const Business = require("../models/business.model");
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const {generateOTP} = require("../utils/allSmallutiliy");
-const {tokenEncodeBusiness} = require ("../utils/tokenJWT.js")
+const {tokenEncodeBusiness} = require ("../utils/tokenJWT.js");
 
 // create a business
 exports.createBusinessService = async (req, res) => {
@@ -23,10 +23,10 @@ exports.createBusinessService = async (req, res) => {
     });
 
     if (newBusiness) {
-     return res.status(201).json({ message: "New business is created", newBusiness });
+     return res.status(201).json({ status:"Success", message: "New business is created", newBusiness });
     }
   } catch (error) {
-     return res.status(500).json({ message: "Server error", error });
+     return res.status(500).json({ status:"Failed", message: "Server error", error });
   }
 };
 
@@ -39,11 +39,11 @@ exports.getAllBusinessService = async (req, res) => {
     if (!businesses)
      return res
         .status(404)
-        .json({ message: "No business found, Please create new business" });
+        .json({ status:"Failed", message: "No business found, Create a new business" });
 
-     return res.status(200).json(businesses);
+     return res.status(200).json({status:"Success",businesses});
   } catch (error) {
-     return res.status(500).json({ message: error.message });
+     return res.status(500).json({ status:"Failed", message: error.message });
   }
 };
 

@@ -15,14 +15,15 @@ const userSchema = new mongoose.Schema(
         "Please provide a valid Bangladeshi phone number",
       ],
     },
-    email: {
+      email: {
       type: String,
-      unique: true,
       lowercase: true,
       trim: true,
+      sparse: true,
+      required:false,
       match: [/\S+@\S+\.\S+/, "Please provide a valid email address"],
-    },
-
+    }, 
+ 
     image: { type: String, default: null },
 
     password: {
